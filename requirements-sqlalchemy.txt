@@ -1,9 +1,10 @@
-# 可选：数据库相关依赖（SQLAlchemy 模型 / 通用 CRUD）。
-# 仅当使用 snowland_fastapihelper.database.sqlalchemy 时才需要安装。
+# Optional: database-related dependencies (SQLAlchemy models / generic CRUD).
+# Only required when using snowland_fastapihelper.database.sqlalchemy.
 #
-# 本库不绑定任何具体数据库驱动，请按实际数据库另行安装对应的异步驱动，例如：
+# This library binds to no specific DB driver; install the matching async driver
+# for your actual database, e.g.:
 #   aiosqlite  (SQLite)
 #   asyncpg    (PostgreSQL)
 #   aiomysql   (MySQL / MariaDB)
-# 或同步驱动（如 psycopg2 / pymysql）。
+# or a sync driver (e.g. psycopg2 / pymysql).
 sqlalchemy>=2.0

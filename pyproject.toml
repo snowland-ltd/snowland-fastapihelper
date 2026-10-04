@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "snowland-fastapihelper"
 version = "0.1.0"
-description = "FastAPI 开发辅助库：统一响应、分页、异常处理器与 SQLAlchemy 模型/CRUD 助手"
+description = "FastAPI development helper: unified response, pagination, exception handlers and SQLAlchemy model/CRUD helpers"
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "BSD 3-Clause" }
@@ -23,20 +23,25 @@ classifiers = [
 ]
 dependencies = [
     "fastapi>=0.100",
-    "sqlalchemy>=2.0",
     "starlette>=0.27",
     "astartool",
 ]
 
 [project.urls]
-Homepage = "https://gitee.com/astar/snowland-fastapihelper"
-Repository = "https://gitee.com/astar/snowland-fastapihelper"
+Homepage = "https://github.com/snowland-ltd/snowland-fastapihelper"
+Repository = "https://github.com/snowland-ltd/snowland-fastapihelper"
 
 [project.optional-dependencies]
+# Database-related (SQLAlchemy models / CRUD) are optional; the core features work
+# without them (unified response, exception handlers, app factory).
+# Note: this library binds to no specific DB driver; it depends only on sqlalchemy
+# itself. Install the matching async driver (aiosqlite / asyncpg / aiomysql / ...)
+# per your actual database.
+sqlalchemy = [
+    "sqlalchemy>=2.0",
+]
 dev = [
     "uvicorn>=0.23",
-    "aiosqlite>=0.19",
-    "asyncpg>=0.28",
 ]
 
 [tool.setuptools.packages.find]

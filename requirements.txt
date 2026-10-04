@@ -1,4 +1,8 @@
+``````````````\# Core dependencies (without SQLAlchemy): needed for unified response / exceptions / app factory.
 fastapi>=0.100
-sqlalchemy>=2.0
 starlette>=0.27
 astartool
+
+# SQLAlchemy is optional; install it when you need database models / CRUD:
+#   pip install -r requirements-sqlalchemy.txt
+# or use the extra: pip install "snowland-fastapihelper[sqlalchemy]"
