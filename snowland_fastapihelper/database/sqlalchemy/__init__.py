@@ -1,7 +1,8 @@
-"""SQLAlchemy 后端实现（可选依赖，需安装 sqlalchemy）。
+"""SQLAlchemy backend implementation (optional dependency; requires sqlalchemy).
 
-import 本子包时会自动向 ``snowland_fastapihelper.database`` 注册后端，
-此后 ``get_crud(model, session)`` 即可按 AsyncSession 类型派发到本实现。
+Importing this subpackage auto-registers the backend with
+``snowland_fastapihelper.database``, after which ``get_crud(model, session)``
+dispatches to this implementation based on the AsyncSession type.
 """
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,7 +19,7 @@ from snowland_fastapihelper.database.sqlalchemy.models import (
     gen_uuid,
 )
 
-# 自注册：session 类型为 sqlalchemy 的 AsyncSession
+# Self-register: session type is sqlalchemy's AsyncSession
 register_backend(
     "sqlalchemy", AsyncSession, lambda model, session: CRUD(model, session)
 )

@@ -1,8 +1,9 @@
-"""基于 SQLAlchemy 异步会话的通用 CRUD 助手。
+"""Generic async CRUD helper based on SQLAlchemy async sessions.
 
-配合 ``snowland_fastapihelper.database.sqlalchemy.models`` 中的 Base / Mixin
-使用。自动识别并应用 ``SoftDeleteMixin``：``list`` / ``get_by_uuid`` 默认过滤
-已逻辑删除的记录（``include_deleted=True`` 可强制包含）。
+Use together with the Base / Mixin in
+``snowland_fastapihelper.database.sqlalchemy.models``. Automatically detects and
+applies ``SoftDeleteMixin``: ``list`` / ``get_by_uuid`` filter out logically
+deleted rows by default (``include_deleted=True`` forces inclusion).
 """
 from typing import Any, Generic, List, Optional, Sequence, Tuple, Type, TypeVar
 
@@ -16,9 +17,9 @@ ModelType = TypeVar("ModelType", bound=Base)
 
 
 class CRUD(CRUDProtocol, Generic[ModelType]):
-    """针对单个模型类型的通用异步 CRUD。
+    """Generic async CRUD for a single model type.
 
-    示例::
+    Example::
 
         crud = CRUD(User, session)
         user = await crud.create(name="alice")
@@ -63,7 +64,7 @@ class CRUD(CRUDProtocol, Generic[ModelType]):
         for key, value in filters.items():
             if not hasattr(self.model, key):
                 raise AttributeError(
-                    f"{self.model.__name__} 没有字段 {key!r}，无法作为过滤条件"
+                    f"{self.model.__name__} has no field {key!r}; cannot use as filter"
                 )
             column = getattr(self.model, key)
             stmt = stmt.where(column == value)
@@ -85,7 +86,7 @@ class CRUD(CRUDProtocol, Generic[ModelType]):
         for key, value in kwargs.items():
             if not hasattr(self.model, key):
                 raise AttributeError(
-                    f"{self.model.__name__} 没有字段 {key!r}，无法更新"
+                    f"{self.model.__name__} has no field {key!r}; cannot update"
                 )
             setattr(obj, key, value)
         await self.session.commit()
@@ -95,7 +96,8 @@ class CRUD(CRUDProtocol, Generic[ModelType]):
     async def soft_delete(self, uuid: str) -> bool:
         if not issubclass(self.model, SoftDeleteMixin):
             raise TypeError(
-                f"{self.model.__name__} 未继承 SoftDeleteMixin，不支持软删除"
+                f"{self.model.__name__} does not inherit SoftDeleteMixin; "
+                f"soft delete unsupported"
             )
         obj = await self.get_by_uuid(uuid)
         if obj is None:
