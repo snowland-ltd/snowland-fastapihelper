@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "snowland-fastapihelper"
+version = "0.1.0"
+description = "FastAPI 开发辅助库：统一响应、分页、异常处理器与 SQLAlchemy 模型/CRUD 助手"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "BSD 3-Clause" }
+authors = [{ name = "A.Star" }]
+keywords = ["fastapi", "sqlalchemy", "response", "helper", "snowland"]
+classifiers = [
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: FastAPI",
+    "Intended Audience :: Developers",
+]
+dependencies = [
+    "fastapi>=0.100",
+    "sqlalchemy>=2.0",
+    "starlette>=0.27",
+    "astartool",
+]
+
+[project.urls]
+Homepage = "https://gitee.com/astar/snowland-fastapihelper"
+Repository = "https://gitee.com/astar/snowland-fastapihelper"
+
+[project.optional-dependencies]
+dev = [
+    "uvicorn>=0.23",
+    "aiosqlite>=0.19",
+    "asyncpg>=0.28",
+]
+
+[tool.setuptools.packages.find]
+include = ["snowland_fastapihelper*"]
