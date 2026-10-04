@@ -1,4 +1,4 @@
-"""database 抽象层单元测试（基于标准库 unittest，不依赖任何 ORM）。"""
+"""Unit tests for the database abstraction layer (stdlib unittest, no ORM dependency)."""
 import unittest
 from typing import Any, Optional, Sequence, Tuple
 
@@ -14,7 +14,7 @@ class _DummySession:
 
 
 class DummyCRUD(CRUDProtocol):
-    """仅用于验证注册表派发的桩实现。"""
+    """Stub implementation used only to verify registry dispatch."""
 
     def __init__(self, model: Any, session: Any) -> None:
         self.model = model
@@ -56,7 +56,7 @@ class TestDatabaseAbstraction(unittest.TestCase):
         self.assertIsInstance(crud, DummyCRUD)
 
     def test_unknown_session_raises(self):
-        class Other:  # 未注册
+        class Other:  # not registered
             pass
 
         with self.assertRaises(TypeError):

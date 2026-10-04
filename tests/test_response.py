@@ -1,4 +1,4 @@
-"""response 模块与异常处理的单元测试（基于标准库 unittest）。"""
+"""Unit tests for the response module and exception handling (stdlib unittest)."""
 import unittest
 
 from astartool.common import ErrorCode
