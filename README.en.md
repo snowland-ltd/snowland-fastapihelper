@@ -5,6 +5,8 @@ format, pagination dependency, business exceptions & exception handlers, app
 factory**, plus **SQLAlchemy 2.0 model base classes / mixins** and a **generic
 async CRUD helper**.
 
+> Version: v0.2.0
+
 ## Features
 
 - **Unified response**: every endpoint returns a fixed 4-field body
@@ -21,6 +23,12 @@ async CRUD helper**.
   `SoftDeleteMixin`.
 - **Generic CRUD**: async `CRUD` helper aware of soft-delete, covering
   create/read/update/delete and paginated listing.
+- **Identity & users (auth)**: Django-auth-style abstract base `AbstractBaseUser`,
+  user models `AbstractUser` / `User`, an account-less `VirtualUser`, and a
+  swappable user model via `get_user_model()` / `set_user_model()`.
+- **Captcha**: ORM-agnostic verification-code service with a built-in memory cache
+  or optional Redis cache; distinguishes **expiry** and **retention** windows so
+  "expired" can be told apart from "never generated".
 
 ## Install
 
@@ -120,6 +128,50 @@ To support an ORM other than SQLAlchemy (Tortoise / Piccolo / Peewee, ...):
 Business code keeps calling `get_crud(model, session)` unchanged; dispatch is
 automatic by session type (or explicit `backend="tortoise"`).
 
+### Identity & users (auth)
+
+Modelled after `django.contrib.auth`, identity classes live in
+`snowland_fastapihelper.auth`; other features (e.g. captcha) depend only on its
+abstraction and never define user classes themselves.
+
+```python
+from snowland_fastapihelper.auth import User, VirtualUser, get_user_model, set_user_model
+
+# Real user: uuid points to users.uuid; tenant_id / merchant_id scope the data.
+user = User(uuid="u-1", merchant_id="m-1")
+print(user.identity_key)  # "user:u-1"
+
+# Account-less identity: e.g. a phone number before registration.
+v = VirtualUser(identity_type="phone", identity_value="+8613800000000")
+
+# Swappable user model: register a custom AbstractUser subclass; get_user_model()
+# then returns it.
+set_user_model(User)
+```
+
+### Captcha
+
+An ORM-agnostic verification-code service; the cache is either an in-process
+memory backend (built-in) or Redis (optional `redis` dependency). It separates two
+time windows: **expiry** (the code is valid and verifiable within it) and
+**retention** (how long the record is kept, >= expiry, so "expired" can be told
+apart from "never generated").
+
+```python
+from snowland_fastapihelper.auth import VirtualUser
+from snowland_fastapihelper.captcha import CaptchaService, CaptchaConfig, VerifyStatus
+
+service = CaptchaService(config=CaptchaConfig(expire_seconds=300, retain_seconds=900))
+principal = VirtualUser(identity_type="phone", identity_value="+8613800000000")
+
+code = await service.generate(principal)         # issue and deliver (SMS / email)
+status = await service.verify(principal, code)    # SUCCESS / MISMATCH / EXPIRED / NOT_FOUND
+# EXPIRED    code exists but is past its validity; NOT_FOUND never generated or purged
+```
+
+For Redis: import `snowland_fastapihelper.captcha.redis_cache`, then
+`CaptchaService(cache=get_cache("redis"))` (requires `pip install redis`).
+
 ## Response convention
 
 Regardless of HTTP status, the business layer always returns **HTTP 200** and
@@ -130,6 +182,54 @@ values come from `astartool.common.ErrorCode`.
 
 ```bash
 python -m unittest discover -s tests
+```
+
+## Changelog
+
+### v0.2.0
+- Added the `auth` package: identity abstraction `AbstractBaseUser`, user models
+  `AbstractUser` / `User`, account-less `VirtualUser`, and a swappable user model
+  via `get_user_model()` / `set_user_model()` (modelled after `django.contrib.auth`).
+- Added the `captcha` package: an ORM-agnostic verification-code service with a
+  built-in memory cache or optional Redis cache, distinguishing code **expiry**
+  from **retention** so "expired" differs from "never generated".
+- Captcha codes are now generated with `astartool.random.random_digit_string`
+  (SystemRandom-backed, cryptographically secure) instead of the pseudo-random
+  `random` module.
+- `MemoryCache` gained a background sweeper thread that proactively evicts expired
+  entries, so codes that are generated but never verified no longer leak memory.
+- Version is now single-sourced from ``snowland_fastapihelper.__version__``
+  (``pyproject.toml`` uses ``dynamic``).
+
+### v0.1.0
+- Unified response format, pagination dependency, business exceptions & handlers,
+  and the app factory.
+- SQLAlchemy 2.0 based, ORM-agnostic database abstraction (model base classes /
+  mixins, generic async CRUD).
+
+## Project layout
+
+```
+snowland_fastapihelper/
+├── __init__.py            # public API exports
+├── response.py            # unified response / pagination dependency
+├── exceptions.py          # business exceptions & handlers
+├── app.py                 # create_app factory
+├── auth/                  # identity & users (django.contrib.auth style)
+│   ├── base_user.py       # AbstractBaseUser base class
+│   └── models.py          # AbstractUser / User / VirtualUser
+├── captcha/               # captcha service (ORM-agnostic)
+│   ├── backends.py        # CacheBackend interface & registry
+│   ├── memory.py          # in-process memory cache (built-in)
+│   ├── redis_cache.py     # Redis cache (optional dependency)
+│   ├── config.py          # expiry / retention settings
+│   └── service.py         # CaptchaService
+└── database/
+    ├── base.py            # ORM-agnostic CRUDProtocol
+    ├── backends.py        # backend registry & get_crud
+    └── sqlalchemy/
+        ├── models.py     # Base / GUID / mixins
+        └── crud.py       # generic async CRUD helper
 ```
 
 ## License

@@ -2,6 +2,8 @@
 
 FastAPI 开发辅助库，提供开箱即用的**统一响应格式、分页依赖、业务异常与异常处理器、应用工厂**，以及基于 **SQLAlchemy 2.0** 的**通用模型基类 / 混入**与**异步 CRUD 助手**。
 
+> 版本：v0.2.0
+
 ## 特性
 
 - **统一响应**：所有接口返回固定 4 字段结构（`successful` / `code` / `message` / `data`），成功 `code=0`，失败由异常处理器统一包装。
@@ -10,6 +12,8 @@ FastAPI 开发辅助库，提供开箱即用的**统一响应格式、分页依�
 - **应用工厂**：`create_app()` 一行装配好异常处理器。
 - **SQLAlchemy 模型层**：`Base`、跨库兼容的 `GUID` 类型，以及 `UuidMixin` / `TimestampMixin` / `TenantMixin` / `MerchantMixin` / `SoftDeleteMixin` 等复用混入。
 - **通用 CRUD**：`CRUD` 异步助手，自动感知软删除，覆盖增删改查与分页列表。
+- **身份与用户（auth）**：参照 `django.contrib.auth` 的抽象基类 `AbstractBaseUser` / `AbstractUser` / `User` 与无账户身份 `VirtualUser`，并提供可替换用户模型 `get_user_model()` / `set_user_model()`。
+- **验证码（captcha）**：与 ORM 无关的验证码服务，内置内存缓存、可选 Redis 缓存；支持**过期时间**与**保留时间**双窗口，可区分「已过期」与「从未生成」。
 
 ## 安装
 
@@ -141,6 +145,44 @@ async def list_users(session: AsyncSession, page: int = 1, page_size: int = 20):
 > `snowland_fastapihelper.database.sqlalchemy`；其他 ORM 的模型基类应各自在其
 > 子包中定义，本库不强制统一模型声明（各 ORM 字段写法不同）。统一的是 **CRUD 行为接口**。
 
+### 身份与用户（auth）
+
+参照 `django.contrib.auth` 的设计，身份相关类集中放在 `snowland_fastapihelper.auth`，验证码等其它模块只依赖其抽象，不自行定义用户类。
+
+```python
+from snowland_fastapihelper.auth import User, VirtualUser, get_user_model, set_user_model
+
+# 真实用户：uuid 指向 users.uuid，可附 tenant_id / merchant_id 用于数据隔离
+user = User(uuid="u-1", merchant_id="m-1")
+print(user.identity_key)  # "user:u-1"
+
+# 无账户身份：注册前用手机号等标识
+v = VirtualUser(identity_type="phone", identity_value="+8613800000000")
+
+# 可替换用户模型：自定义 AbstractUser 子类后注册，get_user_model() 返回当前模型
+set_user_model(User)
+```
+
+### 验证码（captcha）
+
+与 ORM 无关的验证码服务；缓存系统可选内存（内置）或 Redis（可选依赖 `redis`）。
+核心区分两个时间窗口：**过期时间**（有效期内验码通过，否则失败）与**保留时间**（记录保留时长，>= 过期时间，用于区分「已过期」与「从未生成」）。
+
+```python
+from snowland_fastapihelper.auth import VirtualUser
+from snowland_fastapihelper.captcha import CaptchaService, CaptchaConfig, VerifyStatus
+
+service = CaptchaService(config=CaptchaConfig(expire_seconds=300, retain_seconds=900))
+principal = VirtualUser(identity_type="phone", identity_value="+8613800000000")
+
+code = await service.generate(principal)         # 生成并下发（短信 / 邮件）
+status = await service.verify(principal, code)    # SUCCESS / MISMATCH / EXPIRED / NOT_FOUND
+# EXPIRED   码存在但已过有效期；NOT_FOUND 从未生成或已过保留期被清除
+```
+
+使用 Redis 缓存：导入 `snowland_fastapihelper.captcha.redis_cache` 后
+`CaptchaService(cache=get_cache("redis"))`（需 `pip install redis`）。
+
 ## 响应格式约定
 
 无论 HTTP 层状态码如何，业务层统一返回 **HTTP 200**，由响应体内的 `successful` 与 `code` 表达成败。`code` 取值来自 `astartool.common.ErrorCode`。
@@ -160,11 +202,35 @@ snowland_fastapihelper/
 ├── response.py            # 统一响应 / 分页依赖
 ├── exceptions.py          # 业务异常与异常处理器
 ├── app.py                 # 应用工厂 create_app
+├── auth/                  # 身份与用户（参照 django.contrib.auth）
+│   ├── base_user.py       # AbstractBaseUser 抽象基类
+│   └── models.py          # AbstractUser / User / VirtualUser
+├── captcha/               # 验证码服务（ORM 无关）
+│   ├── backends.py        # CacheBackend 抽象与注册表
+│   ├── memory.py          # 内存缓存（内置）
+│   ├── redis_cache.py     # Redis 缓存（可选依赖）
+│   ├── config.py          # 过期 / 保留时间配置
+│   └── service.py         # CaptchaService
 └── database/
+    ├── base.py            # ORM 无关的 CRUDProtocol
+    ├── backends.py        # 后端注册表与 get_crud
     └── sqlalchemy/
         ├── models.py     # Base / GUID / 混入
         └── crud.py       # 通用异步 CRUD 助手
 ```
+
+## 更新日志
+
+### v0.2.0
+- 新增 `auth` 包：身份抽象 `AbstractBaseUser`、用户模型 `AbstractUser` / `User`、无账户身份 `VirtualUser`，以及可替换用户模型 `get_user_model()` / `set_user_model()`（参照 `django.contrib.auth`）。
+- 新增 `captcha` 包：与 ORM 无关的验证码服务，缓存支持内存（内置）与 Redis（可选依赖 `redis`）；区分验证码**过期时间**与**保留时间**，可辨别「已过期」与「从未生成」。
+- 验证码生成改用 `astartool.random.random_digit_string`（基于 `SystemRandom`，密码学安全），替换标准库伪随机 `random`。
+- 内存缓存 `MemoryCache` 新增后台 sweep 线程，主动回收过期条目，避免「生成但未验证」导致内存不回收。
+- 版本号改为单一来源：从包 `__init__.__version__` 读取（`pyproject.toml` 使用 `dynamic`）。
+
+### v0.1.0
+- 统一响应格式、分页依赖、业务异常与异常处理器、应用工厂。
+- 基于 SQLAlchemy 2.0 的 ORM 无关数据库抽象层（模型基类 / 混入、通用异步 CRUD）。
 
 ## 许可证
 

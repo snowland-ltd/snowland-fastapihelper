@@ -12,6 +12,8 @@ Provides the following out-of-the-box capabilities:
 
 See README.md for typical usage.
 """
+__version__ = "0.2.0"
+
 from snowland_fastapihelper.response import (
     DEFAULT_PAGE_SIZE,
     MAX_PAGE_SIZE,
@@ -32,7 +34,25 @@ from snowland_fastapihelper.database import (
     register_backend,
 )
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    # Listed in ``__all__`` for ``import *`` completeness; bound at runtime via
+    # ``__getattr__`` so the core API works without sqlalchemy installed.
+    from snowland_fastapihelper.database.sqlalchemy import (
+        Base,
+        CRUD,
+        GUID,
+        gen_uuid,
+        UuidMixin,
+        TimestampMixin,
+        TenantMixin,
+        MerchantMixin,
+        SoftDeleteMixin,
+    )
+
 __all__ = [
+    "__version__",
     "DEFAULT_PAGE_SIZE",
     "MAX_PAGE_SIZE",
     "Pagination",

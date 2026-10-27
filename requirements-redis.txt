@@ -1,0 +1,3 @@
+# Optional: redis cache backend for the captcha module.
+# Only required when using snowland_fastapihelper.captcha.redis_cache.
+redis>=4.2

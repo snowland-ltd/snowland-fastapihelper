@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "snowland-fastapihelper"
-version = "0.1.0"
+dynamic = ["version"]
 description = "FastAPI development helper: unified response, pagination, exception handlers and SQLAlchemy model/CRUD helpers"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -40,9 +40,18 @@ Repository = "https://github.com/snowland-ltd/snowland-fastapihelper"
 sqlalchemy = [
     "sqlalchemy>=2.0",
 ]
+# Redis cache backend for the captcha module; optional, not needed for memory cache.
+redis = [
+    "redis>=4.2",
+]
 dev = [
     "uvicorn>=0.23",
 ]
 
 [tool.setuptools.packages.find]
 include = ["snowland_fastapihelper*"]
+
+# Single source of truth for the version: read from ``__version__`` in the
+# package ``__init__.py`` instead of duplicating it here.
+[tool.setuptools.dynamic]
+version = { attr = "snowland_fastapihelper.__version__" }

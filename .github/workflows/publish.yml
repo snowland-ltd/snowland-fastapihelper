@@ -23,9 +23,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install build
 
+      - name: Install runtime deps for build
+        env:
+          # astartool lives on the internal index; the package version is read
+          # from ``snowland_fastapihelper.__init__``, which imports fastapi /
+          # astartool at top level. Building without isolation needs them present.
+          PIP_EXTRA_INDEX_URL: ${{ secrets.PIP_EXTRA_INDEX_URL }}
+        run: |
+          pip install fastapi starlette astartool
+
       - name: Build distributions
         run: |
-          python -m build
+          python -m build --no-isolation
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
