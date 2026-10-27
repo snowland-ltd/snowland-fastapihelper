@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,11 +8,10 @@ dynamic = ["version"]
 description = "FastAPI development helper: unified response, pagination, exception handlers and SQLAlchemy model/CRUD helpers"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "BSD 3-Clause" }
+license = "BSD-3-Clause"
 authors = [{ name = "A.Star" }]
 keywords = ["fastapi", "sqlalchemy", "response", "helper", "snowland"]
 classifiers = [
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
